@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Omus — To-do</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink:    #1a1814;
+    --paper:  #f5f2ec;
+    --sand:   #e8e3d9;
+    --muted:  #9e9890;
+    --accent: #c4622d;
+    --done:   #b0a99e;
+    --radius: 3px;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Layout ── */
+  .screen {
+    display: none;
+    min-height: 100vh;
+  }
+  .screen.active { display: flex; }
+
+  /* ── Auth screen ── */
+  #auth-screen {
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 2rem;
+  }
+
+  .auth-card {
+    width: 100%;
+    max-width: 380px;
+  }
+
+  .brand {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2.8rem;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 0.2rem;
+  }
+  .brand em {
+    color: var(--accent);
+    font-style: italic;
+  }
+  .tagline {
+    font-size: 0.82rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 3rem;
+  }
+
+  .tab-bar {
+    display: flex;
+    border-bottom: 1px solid var(--sand);
+    margin-bottom: 2rem;
+    gap: 0;
+  }
+  .tab {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 0.75rem 0;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .tab.active {
+    color: var(--ink);
+    border-bottom-color: var(--accent);
+  }
+
+  .form-panel { display: none; }
+  .form-panel.active { display: block; }
+
+  .field {
+    margin-bottom: 1.2rem;
+  }
+  .field label {
+    display: block;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+  .field input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--sand);
+    padding: 0.5rem 0;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 300;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .field input:focus { border-bottom-color: var(--ink); }
+  .field input::placeholder { color: var(--done); }
+
+  .btn-primary {
+    width: 100%;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    padding: 0.9rem 1.5rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: var(--radius);
+    margin-top: 0.5rem;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .btn-primary:hover { background: var(--accent); }
+  .btn-primary:active { transform: scale(0.98); }
+
+  .auth-error {
+    font-size: 0.8rem;
+    color: var(--accent);
+    margin-top: 0.8rem;
+    min-height: 1.2em;
+    text-align: center;
+  }
+
+  /* ── App screen ── */
+  #app-screen {
+    flex-direction: column;
+    align-items: center;
+    padding: 0 1.5rem 4rem;
+  }
+
+  .app-header {
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2.5rem 0 2rem;
+    border-bottom: 1px solid var(--sand);
+  }
+
+  .app-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.9rem;
+    letter-spacing: -0.01em;
+  }
+  .app-title span { color: var(--accent); font-style: italic; }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+  }
+  .username-tag {
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .btn-logout {
+    background: none;
+    border: 1px solid var(--sand);
+    padding: 0.35rem 0.85rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: var(--radius);
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .btn-logout:hover { border-color: var(--ink); color: var(--ink); }
+
+  .app-body {
+    width: 100%;
+    max-width: 560px;
+    padding-top: 2rem;
+  }
+
+  /* Input row */
+  .add-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 2.5rem;
+    align-items: center;
+  }
+  .add-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--sand);
+    padding: 0.6rem 0;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 300;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .add-input:focus { border-bottom-color: var(--ink); }
+  .add-input::placeholder { color: var(--done); }
+
+  .btn-add {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 50%;
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .btn-add:hover { background: var(--ink); }
+  .btn-add:active { transform: scale(0.92); }
+
+  /* Filter tabs */
+  .filters {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .filter-btn {
+    background: none;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0;
+    padding-bottom: 4px;
+    border-bottom: 1.5px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .filter-btn.active { color: var(--ink); border-bottom-color: var(--accent); }
+
+  /* Todo list */
+  .todo-list {
+    list-style: none;
+  }
+
+  .todo-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--sand);
+    animation: fadeIn 0.25s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .check-btn {
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 1.5px solid var(--sand);
+    border-radius: 50%;
+    background: none;
+    cursor: pointer;
+    position: relative;
+    transition: border-color 0.2s, background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .check-btn:hover { border-color: var(--accent); }
+  .check-btn.checked {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .check-btn.checked::after {
+    content: '';
+    width: 5px;
+    height: 9px;
+    border: 2px solid #fff;
+    border-top: none;
+    border-left: none;
+    transform: rotate(42deg) translateY(-1px);
+    display: block;
+  }
+
+  .todo-text {
+    flex: 1;
+    font-size: 0.97rem;
+    line-height: 1.4;
+    color: var(--ink);
+    transition: color 0.2s;
+    word-break: break-word;
+  }
+  .todo-item.done .todo-text {
+    color: var(--done);
+    text-decoration: line-through;
+    text-decoration-color: var(--done);
+  }
+
+  .del-btn {
+    background: none;
+    border: none;
+    color: var(--sand);
+    font-size: 1.1rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0.2rem;
+    flex-shrink: 0;
+    transition: color 0.2s;
+    opacity: 0;
+    transition: opacity 0.2s, color 0.2s;
+  }
+  .todo-item:hover .del-btn { opacity: 1; }
+  .del-btn:hover { color: var(--accent); }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem 0;
+    color: var(--muted);
+    font-size: 0.85rem;
+    letter-spacing: 0.04em;
+  }
+  .empty-state .icon {
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+    display: block;
+    opacity: 0.4;
+  }
+
+  .stats {
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 1.5rem;
+    text-align: right;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Auth Screen ── -->
+<div id="auth-screen" class="screen active">
+  <div class="auth-card">
+    <div class="brand">Om<em>us</em></div>
+    <p class="tagline">Your quiet task companion</p>
+
+    <div class="tab-bar">
+      <button class="tab active" onclick="switchTab('login')">Sign In</button>
+      <button class="tab" onclick="switchTab('register')">Register</button>
+    </div>
+
+    <div id="login-panel" class="form-panel active">
+      <div class="field">
+        <label>Username</label>
+        <input id="login-user" type="text" placeholder="your name" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn-primary" onclick="doLogin()">Enter</button>
+      <div class="auth-error" id="login-error"></div>
+    </div>
+
+    <div id="register-panel" class="form-panel">
+      <div class="field">
+        <label>Choose a username</label>
+        <input id="reg-user" type="text" placeholder="your name" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Choose a password</label>
+        <input id="reg-pass" type="password" placeholder="••••••••" autocomplete="new-password">
+      </div>
+      <button class="btn-primary" onclick="doRegister()">Create account</button>
+      <div class="auth-error" id="reg-error"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── App Screen ── -->
+<div id="app-screen" class="screen">
+  <header class="app-header">
+    <div class="app-title">My <span>tasks</span></div>
+    <div class="header-right">
+      <span class="username-tag" id="display-username"></span>
+      <button class="btn-logout" onclick="doLogout()">Sign out</button>
+    </div>
+  </header>
+
+  <main class="app-body">
+    <div class="add-row">
+      <input class="add-input" id="new-task" type="text" placeholder="Add a new task…">
+      <button class="btn-add" onclick="addTodo()" title="Add task">+</button>
+    </div>
+
+    <div class="filters">
+      <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+      <button class="filter-btn" onclick="setFilter('active', this)">Active</button>
+      <button class="filter-btn" onclick="setFilter('done', this)">Done</button>
+    </div>
+
+    <ul class="todo-list" id="todo-list"></ul>
+    <div class="stats" id="stats"></div>
+  </main>
+</div>
+
+<script>
+  // ⚠️ Replace this with your Render backend URL after deploying (no trailing slash)
+  const API = "https://your-app-name.onrender.com";
+  let token = localStorage.getItem("todo_token") || "";
+  let username = localStorage.getItem("todo_user") || "";
+  let todos = [];
+  let filter = "all";
+
+  // ── Boot ──────────────────────────────────────────────────────────────────
+  if (token) showApp();
+
+  // Enter key support
+  document.getElementById("new-task").addEventListener("keydown", e => {
+    if (e.key === "Enter") addTodo();
+  });
+  document.getElementById("login-pass").addEventListener("keydown", e => {
+    if (e.key === "Enter") doLogin();
+  });
+  document.getElementById("reg-pass").addEventListener("keydown", e => {
+    if (e.key === "Enter") doRegister();
+  });
+
+  // ── Auth tabs ─────────────────────────────────────────────────────────────
+  function switchTab(tab) {
+    document.querySelectorAll(".tab").forEach((t, i) => {
+      t.classList.toggle("active", (i === 0 && tab === "login") || (i === 1 && tab === "register"));
+    });
+    document.getElementById("login-panel").classList.toggle("active", tab === "login");
+    document.getElementById("register-panel").classList.toggle("active", tab === "register");
+    clearErrors();
+  }
+  function clearErrors() {
+    document.getElementById("login-error").textContent = "";
+    document.getElementById("reg-error").textContent = "";
+  }
+
+  // ── Auth actions ──────────────────────────────────────────────────────────
+  async function doLogin() {
+    const user = document.getElementById("login-user").value.trim();
+    const pass = document.getElementById("login-pass").value;
+    const res = await fetch(`${API}/api/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: user, password: pass })
+    });
+    const data = await res.json();
+    if (!res.ok) { document.getElementById("login-error").textContent = data.error; return; }
+    token = data.token;
+    username = data.username;
+    localStorage.setItem("todo_token", token);
+    localStorage.setItem("todo_user", username);
+    showApp();
+  }
+
+  async function doRegister() {
+    const user = document.getElementById("reg-user").value.trim();
+    const pass = document.getElementById("reg-pass").value;
+    const res = await fetch(`${API}/api/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: user, password: pass })
+    });
+    const data = await res.json();
+    if (!res.ok) { document.getElementById("reg-error").textContent = data.error; return; }
+    document.getElementById("reg-error").style.color = "#2a7a4a";
+    document.getElementById("reg-error").textContent = "Account created — sign in!";
+    setTimeout(() => { switchTab("login"); document.getElementById("login-user").value = user; }, 900);
+  }
+
+  async function doLogout() {
+    await fetch(`${API}/api/logout`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    token = username = "";
+    localStorage.removeItem("todo_token");
+    localStorage.removeItem("todo_user");
+    document.getElementById("app-screen").classList.remove("active");
+    document.getElementById("auth-screen").classList.add("active");
+    document.getElementById("login-user").value = "";
+    document.getElementById("login-pass").value = "";
+  }
+
+  // ── App ───────────────────────────────────────────────────────────────────
+  function showApp() {
+    document.getElementById("auth-screen").classList.remove("active");
+    document.getElementById("app-screen").classList.add("active");
+    document.getElementById("display-username").textContent = username;
+    loadTodos();
+  }
+
+  async function loadTodos() {
+    const res = await fetch(`${API}/api/todos`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res.status === 401) { doLogout(); return; }
+    todos = await res.json();
+    render();
+  }
+
+  async function addTodo() {
+    const input = document.getElementById("new-task");
+    const text = input.value.trim();
+    if (!text) return;
+    const res = await fetch(`${API}/api/todos`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ text })
+    });
+    if (!res.ok) return;
+    const todo = await res.json();
+    todos.unshift(todo);
+    input.value = "";
+    render();
+  }
+
+  async function toggleTodo(id) {
+    const todo = todos.find(t => t.id === id);
+    if (!todo) return;
+    const res = await fetch(`${API}/api/todos/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ done: !todo.done })
+    });
+    if (!res.ok) return;
+    const updated = await res.json();
+    todos = todos.map(t => t.id === id ? updated : t);
+    render();
+  }
+
+  async function deleteTodo(id) {
+    await fetch(`${API}/api/todos/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    todos = todos.filter(t => t.id !== id);
+    render();
+  }
+
+  function setFilter(f, btn) {
+    filter = f;
+    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    render();
+  }
+
+  function render() {
+    const list = document.getElementById("todo-list");
+    const filtered = todos.filter(t => {
+      if (filter === "active") return !t.done;
+      if (filter === "done")   return t.done;
+      return true;
+    });
+
+    if (!filtered.length) {
+      const msgs = { all: "Nothing here yet.", active: "All done — great work!", done: "Nothing completed yet." };
+      const icons = { all: "✦", active: "✓", done: "○" };
+      list.innerHTML = `<li class="empty-state"><span class="icon">${icons[filter]}</span>${msgs[filter]}</li>`;
+    } else {
+      list.innerHTML = filtered.map(t => `
+        <li class="todo-item ${t.done ? "done" : ""}" data-id="${t.id}">
+          <button class="check-btn ${t.done ? "checked" : ""}" onclick="toggleTodo(${t.id})" title="Toggle"></button>
+          <span class="todo-text">${escHtml(t.text)}</span>
+          <button class="del-btn" onclick="deleteTodo(${t.id})" title="Delete">✕</button>
+        </li>
+      `).join("");
+    }
+
+    const total  = todos.length;
+    const done   = todos.filter(t => t.done).length;
+    const active = total - done;
+    document.getElementById("stats").textContent =
+      total ? `${active} remaining · ${done} completed` : "";
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+</script>
+</body>
+</html>
